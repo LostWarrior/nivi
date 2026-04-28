@@ -1,26 +1,31 @@
 # Nivi
 
-Nivi is a terminal-first AI assistant for NVIDIA-hosted models
+Nivi is a Go-based, terminal-first AI assistant for NVIDIA-hosted models.
+
+V1 is focused on a fast single-binary CLI for:
+
+- interactive chat in the terminal
+- one-shot prompts
+- piping stdin into a prompt
+- listing and switching available models
 
 ## Installation
 
-Install, configure, and run:
+Nivi V1 ships as a single native binary. Download the latest release for your platform from [GitHub Releases](https://github.com/LostWarrior/nivi/releases), place `nivi` on your `PATH`, then configure and run:
 
 ```bash
-# installer command will be added once the public release URL is finalized
 echo 'export NVIDIA_API_KEY="nvapi-your-key-here"' >> ~/.zshrc
 source ~/.zshrc
 nivi
 ```
 
-## Help Commands
+## Usage
 
-- `nivi` starts an interactive REPL
-- `nivi` is the primary documented command and enters chat directly
+- `nivi` starts an interactive chat session
 - `nivi "explain this stack trace"` runs a one-shot prompt
-- `cat file.py | nivi "review this"` accepts stdin
+- `cat file.py | nivi "review this"` sends stdin with a prompt
 - `nivi models` lists models available to the current API key
-- `nivi -m <model-id>` overrides the default model
+- `nivi -m <model-id>` selects a model for the current command
 - `/model` switches models during a chat session
 
 ## Optional Environment Variables
