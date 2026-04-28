@@ -11,13 +11,33 @@ V1 is focused on a fast single-binary CLI for:
 
 ## Installation
 
-Nivi V1 ships as a single native binary. Download the latest release for your platform from [GitHub Releases](https://github.com/LostWarrior/nivi/releases), place `nivi` on your `PATH`, then configure and run:
+Install the latest release:
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/LostWarrior/nivi/main/scripts/install.sh | sh
+```
+
+The installer downloads the matching release asset for macOS or Linux (`amd64` and `arm64`) and installs `nivi` to `~/.local/bin` by default.
+
+Pin a release or change the install directory:
+
+```bash
+NIVI_VERSION=v0.1.0 sh -c "$(curl -fsSL https://raw.githubusercontent.com/LostWarrior/nivi/main/scripts/install.sh)"
+NIVI_INSTALL_DIR="$HOME/bin" sh -c "$(curl -fsSL https://raw.githubusercontent.com/LostWarrior/nivi/main/scripts/install.sh)"
+```
+
+Then configure and run:
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
 echo 'export NVIDIA_API_KEY="nvapi-your-key-here"' >> ~/.zshrc
 source ~/.zshrc
 nivi
 ```
+
+Alternative:
+
+- Browse release assets manually at [GitHub Releases](https://github.com/LostWarrior/nivi/releases)
 
 ## Usage
 
@@ -27,6 +47,7 @@ nivi
 - `nivi models` lists models available to the current API key
 - `nivi -m <model-id>` selects a model for the current command
 - `/model` switches models during a chat session
+- `nivi version` prints the installed version
 
 ## Optional Environment Variables
 
