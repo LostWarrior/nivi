@@ -1,0 +1,39 @@
+version: 2
+
+project_name: nivi
+
+builds:
+  - id: nivi
+    main: ./cmd/nivi
+    binary: nivi
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X github.com/LostWarrior/nivi/internal/cli.version={{ .Version }}
+
+archives:
+  - id: nivi
+    ids:
+      - nivi
+    formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+
+checksum:
+  name_template: "nivi_checksums.txt"
+
+release:
+  github:
+    owner: LostWarrior
+    name: nivi
+
+changelog:
+  use: git
