@@ -60,7 +60,7 @@ func RunREPL(ctx context.Context, session Session) error {
 				return err
 			}
 			continue
-		case strings.HasPrefix(prompt, "/model"):
+		case isModelCommand(prompt):
 			nextModel, handled, err := handleModelCommand(ctx, reader, session, prompt)
 			if err != nil {
 				if _, writeErr := fmt.Fprintf(session.IO.Err, "error: %v\n", err); writeErr != nil {
@@ -194,6 +194,13 @@ func handleModelCommand(ctx context.Context, reader *bufio.Reader, session Sessi
 	}
 
 	return nextModel, true, nil
+}
+
+func isModelCommand(input string) bool {
+	if input == "/model" {
+		return true
+	}
+	return strings.HasPrefix(input, "/model ") || strings.HasPrefix(input, "/model\t")
 }
 
 func readLine(reader *bufio.Reader) (string, error) {

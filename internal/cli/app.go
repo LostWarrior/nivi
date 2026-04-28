@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -26,6 +27,10 @@ type rootCommand struct {
 func Run(args []string, streams niviruntime.IO) int {
 	command, err := parseArgs(args)
 	if err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			printHelp(streams.Out)
+			return 0
+		}
 		_, _ = fmt.Fprintln(streams.Err, strings.TrimSpace(err.Error()))
 		return 1
 	}
