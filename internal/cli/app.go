@@ -14,7 +14,7 @@ import (
 	niviruntime "github.com/LostWarrior/nivi/internal/runtime"
 )
 
-const version = "dev"
+var version = "dev"
 
 type rootCommand struct {
 	Name    string
