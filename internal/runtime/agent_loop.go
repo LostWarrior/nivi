@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/LostWarrior/nivi/internal/config"
@@ -49,7 +50,7 @@ func ExecuteAgentTurn(
 	session Session,
 	history []provider.Message,
 ) (provider.Message, []provider.Message, error) {
-	root, err := os.Getwd()
+	root, err := resolveSessionRoot(session)
 	if err != nil {
 		return provider.Message{}, nil, err
 	}
@@ -103,4 +104,16 @@ func ExecuteAgentTurn(
 
 func shouldStream(state config.State, streams IO) bool {
 	return state.StreamingEnabled && streams.StdoutTTY
+}
+
+func resolveSessionRoot(session Session) (string, error) {
+	candidate := strings.TrimSpace(session.WorkspaceRoot)
+	if candidate == "" {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return "", err
+		}
+		candidate = cwd
+	}
+	return filepath.Abs(candidate)
 }

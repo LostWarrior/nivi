@@ -18,6 +18,8 @@ type Session struct {
 	Config config.State
 	IO     IO
 	Model  string
+	// WorkspaceRoot is the sandbox root captured when nivi starts.
+	WorkspaceRoot string
 }
 
 func RunREPL(ctx context.Context, session Session) error {

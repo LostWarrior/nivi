@@ -45,12 +45,14 @@ func RunChat(ctx context.Context, command ChatCommand) error {
 	}
 
 	session := niviruntime.Session{
-		Client: client,
-		Config: command.State,
-		IO:     command.Streams,
-		Model:  activeModel,
+		Client:        client,
+		Config:        command.State,
+		IO:            command.Streams,
+		Model:         activeModel,
+		WorkspaceRoot: ".",
 	}
 	if cwd, err := os.Getwd(); err == nil {
+		session.WorkspaceRoot = cwd
 		loaded, err := instructions.Load(cwd)
 		if err != nil {
 			return err
