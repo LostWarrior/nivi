@@ -57,12 +57,17 @@ func ExecuteAgentTurn(
 
 	conversation := BuildMessages(session.Config.SystemPrompt, history)
 	for round := 0; round < maxToolRounds; round++ {
+		toolChoice := any("auto")
+		if round == maxToolRounds-1 {
+			toolChoice = "none"
+		}
+
 		request := provider.ChatRequest{
 			Model:      session.Model,
 			Messages:   conversation,
 			MaxTokens:  session.Config.MaxTokens,
 			Tools:      agentTools(),
-			ToolChoice: "auto",
+			ToolChoice: toolChoice,
 		}
 
 		turn, err := session.Client.CompleteTurn(ctx, request)
