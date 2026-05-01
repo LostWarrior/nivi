@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"strings"
 
 	"github.com/LostWarrior/nivi/internal/config"
+	"github.com/LostWarrior/nivi/internal/instructions"
 	"github.com/LostWarrior/nivi/internal/provider"
 	niviruntime "github.com/LostWarrior/nivi/internal/runtime"
 	"github.com/LostWarrior/nivi/internal/selection"
@@ -48,12 +51,19 @@ func RunChat(ctx context.Context, command ChatCommand) error {
 		IO:     command.Streams,
 		Model:  activeModel,
 	}
+	if cwd, err := os.Getwd(); err == nil {
+		loaded, err := instructions.Load(cwd)
+		if err != nil {
+			return err
+		}
+		session.Config.SystemPrompt = mergeSystemPrompt(command.State.SystemPrompt, loaded.Content)
+	}
 
 	if prompt != "" {
 		response, err := runChat(
 			ctx,
 			session,
-			buildMessages(command.State.SystemPrompt, []provider.Message{{
+			buildMessages(session.Config.SystemPrompt, []provider.Message{{
 				Role:    "user",
 				Content: prompt,
 			}}),
@@ -72,6 +82,20 @@ func RunChat(ctx context.Context, command ChatCommand) error {
 	}
 
 	return niviruntime.RunREPL(ctx, session)
+}
+
+func mergeSystemPrompt(basePrompt string, extraPrompt string) string {
+	basePrompt = strings.TrimSpace(basePrompt)
+	extraPrompt = strings.TrimSpace(extraPrompt)
+
+	switch {
+	case basePrompt == "":
+		return extraPrompt
+	case extraPrompt == "":
+		return basePrompt
+	default:
+		return basePrompt + "\n\n" + extraPrompt
+	}
 }
 
 func buildMessages(systemPrompt string, history []provider.Message) []provider.Message {
