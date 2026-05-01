@@ -69,7 +69,7 @@ func RunChat(ctx context.Context, command ChatCommand) error {
 		if err != nil {
 			return err
 		}
-		if _, err := fmt.Fprintln(command.Streams.Out, assistant.Content); err != nil {
+		if _, err := logger.Assistant(command.Streams.Out, assistant.Content); err != nil {
 			return err
 		}
 		return nil

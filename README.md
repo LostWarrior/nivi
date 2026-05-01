@@ -18,6 +18,18 @@ echo 'export NVIDIA_API_KEY="nvapi-your-key-here"' >> ~/.zshrc
 source ~/.zshrc
 nivi
 ```
+
+
+```md
+## 💡 Colour support
+
+The terminal UI now honours a colour scheme.  Detects dark / light automatically,
+or use the flag:
+
+```
+nivi --theme=dark "hello"
+```
+
 ## Usage
 
 - `nivi` starts an interactive chat session

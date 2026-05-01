@@ -8,9 +8,18 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/fatih/color"
+        "github.com/mattn/go-isatty"
+        "myapp/internal/theme"
 )
 
 type Level int
+
+var (
+    userC     *color.Color
+    assistantC *color.Color
+    systemC  *color.Color
+)
 
 const (
 	LevelDebug Level = iota

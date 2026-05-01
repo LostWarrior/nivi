@@ -84,30 +84,30 @@ func ExecuteAgentTurn(
 		}
 		conversation = append(conversation, assistant)
 
-			if len(assistant.ToolCalls) == 0 {
-				if assistant.Content == "" {
-					return provider.Message{}, nil, nivierrors.Protocol(
-						"runtime.execute_agent_turn",
+		if len(assistant.ToolCalls) == 0 {
+			if assistant.Content == "" {
+				return provider.Message{}, nil, nivierrors.Protocol(
+					"runtime.execute_agent_turn",
 					"assistant returned empty output without tool calls",
 					nil,
 				)
-				}
-				return assistant, conversation[1:], nil
 			}
-			if round == maxToolRounds-1 {
-				finalContent := strings.TrimSpace(assistant.Content)
-				if finalContent == "" {
-					finalContent = toolLoopFallback
-				}
-				finalAssistant := provider.Message{
-					Role:    "assistant",
-					Content: finalContent,
-				}
-				conversation[len(conversation)-1] = finalAssistant
-				return finalAssistant, conversation[1:], nil
+			return assistant, conversation[1:], nil
+		}
+		if round == maxToolRounds-1 {
+			finalContent := strings.TrimSpace(assistant.Content)
+			if finalContent == "" {
+				finalContent = toolLoopFallback
 			}
+			finalAssistant := provider.Message{
+				Role:    "assistant",
+				Content: finalContent,
+			}
+			conversation[len(conversation)-1] = finalAssistant
+			return finalAssistant, conversation[1:], nil
+		}
 
-			toolMessages := make([]provider.Message, 0, len(assistant.ToolCalls))
+		toolMessages := make([]provider.Message, 0, len(assistant.ToolCalls))
 		for _, call := range assistant.ToolCalls {
 			toolMessages = append(toolMessages, executeToolCall(session, root, call))
 		}
