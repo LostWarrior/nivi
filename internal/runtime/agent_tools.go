@@ -90,7 +90,9 @@ func decodeToolArgs(raw string, out any) error {
 	if err := decoder.Decode(out); err != nil {
 		return nivierrors.Validation("runtime.decode_tool_args", "tool arguments must be valid JSON object")
 	}
-	if decoder.More() {
+
+	var trailing json.RawMessage
+	if err := decoder.Decode(&trailing); err != io.EOF {
 		return nivierrors.Validation("runtime.decode_tool_args", "tool arguments must be a single JSON object")
 	}
 	return nil

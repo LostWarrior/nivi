@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"strings"
 
@@ -135,7 +136,8 @@ func (t *Toolset) Execute(name string, arguments string) (string, error) {
 	name = strings.TrimSpace(name)
 	switch name {
 	case toolNamePWD:
-		if strings.TrimSpace(arguments) != "" && strings.TrimSpace(arguments) != "{}" {
+		var args struct{}
+		if err := decodeToolArgs(arguments, &args); err != nil {
 			return "", nivierrors.Validation(opSandboxDecodeArgs, errToolHasNoArguments.Error())
 		}
 		return t.PWD(), nil
@@ -187,7 +189,9 @@ func decodeToolArgs(input string, out any) error {
 	if err := decoder.Decode(out); err != nil {
 		return nivierrors.Validation(opSandboxInvalidArg, "tool arguments must be valid JSON object")
 	}
-	if decoder.More() {
+
+	var trailing json.RawMessage
+	if err := decoder.Decode(&trailing); err != io.EOF {
 		return nivierrors.Validation(opSandboxInvalidArg, "tool arguments must be a single JSON object")
 	}
 	return nil

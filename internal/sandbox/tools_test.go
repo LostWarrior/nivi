@@ -199,6 +199,53 @@ func TestExecuteRoutesTools(t *testing.T) {
 	}
 }
 
+func TestExecutePWDAcceptsFormattedEmptyJSONObject(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	toolset, err := NewToolset(root)
+	if err != nil {
+		t.Fatalf("NewToolset() error = %v", err)
+	}
+
+	if _, err := toolset.Execute(toolNamePWD, "{\n}"); err != nil {
+		t.Fatalf("Execute(pwd, formatted empty object) error = %v", err)
+	}
+	if _, err := toolset.Execute(toolNamePWD, "{ }"); err != nil {
+		t.Fatalf("Execute(pwd, spaced empty object) error = %v", err)
+	}
+}
+
+func TestExecutePWDRejectsUnexpectedArguments(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	toolset, err := NewToolset(root)
+	if err != nil {
+		t.Fatalf("NewToolset() error = %v", err)
+	}
+
+	if _, err := toolset.Execute(toolNamePWD, `{"path":"."}`); err == nil {
+		t.Fatal("Execute(pwd, non-empty object) expected error")
+	}
+}
+
+func TestExecuteRejectsTrailingTopLevelTokens(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	mustWriteFile(t, filepath.Join(root, "a.txt"), "content")
+
+	toolset, err := NewToolset(root)
+	if err != nil {
+		t.Fatalf("NewToolset() error = %v", err)
+	}
+
+	if _, err := toolset.Execute(toolNameReadFile, `{"path":"a.txt"}{"extra":true}`); err == nil {
+		t.Fatal("Execute(read_file, trailing token) expected error")
+	}
+}
+
 func mustWriteFile(t *testing.T, path string, content string) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
