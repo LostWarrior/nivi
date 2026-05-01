@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -60,24 +59,17 @@ func RunChat(ctx context.Context, command ChatCommand) error {
 	}
 
 	if prompt != "" {
-		response, err := runChat(
-			ctx,
-			session,
-			buildMessages(session.Config.SystemPrompt, []provider.Message{{
-				Role:    "user",
-				Content: prompt,
-			}}),
-		)
+		history := []provider.Message{{
+			Role:    "user",
+			Content: prompt,
+		}}
+		assistant, _, err := niviruntime.ExecuteAgentTurn(ctx, session, history)
 		if err != nil {
 			return err
 		}
-
-		if !shouldStream(command.State, command.Streams) {
-			if _, err := fmt.Fprintln(command.Streams.Out, response); err != nil {
-				return err
-			}
+		if _, err := fmt.Fprintln(command.Streams.Out, assistant.Content); err != nil {
+			return err
 		}
-
 		return nil
 	}
 
@@ -96,45 +88,4 @@ func mergeSystemPrompt(basePrompt string, extraPrompt string) string {
 	default:
 		return basePrompt + "\n\n" + extraPrompt
 	}
-}
-
-func buildMessages(systemPrompt string, history []provider.Message) []provider.Message {
-	messages := make([]provider.Message, 0, len(history)+1)
-	messages = append(messages, provider.Message{
-		Role:    "system",
-		Content: systemPrompt,
-	})
-	messages = append(messages, history...)
-	return messages
-}
-
-func runChat(ctx context.Context, session niviruntime.Session, messages []provider.Message) (string, error) {
-	request := provider.ChatRequest{
-		Model:     session.Model,
-		Messages:  messages,
-		MaxTokens: session.Config.MaxTokens,
-		Stream:    shouldStream(session.Config, session.IO),
-	}
-
-	if request.Stream {
-		response, err := session.Client.Stream(ctx, request, func(delta string) error {
-			_, writeErr := io.WriteString(session.IO.Out, delta)
-			return writeErr
-		})
-		if err != nil {
-			return "", err
-		}
-
-		if _, err := fmt.Fprintln(session.IO.Out); err != nil {
-			return "", err
-		}
-
-		return response, nil
-	}
-
-	return session.Client.Complete(ctx, request)
-}
-
-func shouldStream(state config.State, streams niviruntime.IO) bool {
-	return state.StreamingEnabled && streams.StdoutTTY
 }

@@ -21,38 +21,31 @@ const (
 	maxStreamTokenBytes     = 1 << 20
 )
 
-type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
-}
-
-type ChatRequest struct {
-	Model     string    `json:"model"`
-	Messages  []Message `json:"messages"`
-	MaxTokens int       `json:"max_tokens,omitempty"`
-	Stream    bool      `json:"stream,omitempty"`
-}
-
-type chatCompletionResponse struct {
-	Choices []chatChoice `json:"choices"`
-}
-
-type chatChoice struct {
-	Message      Message `json:"message"`
-	Delta        Message `json:"delta"`
-	FinishReason string  `json:"finish_reason"`
-}
-
 func (c *Client) Complete(ctx context.Context, chatRequest ChatRequest) (string, error) {
-	if err := validateChatRequest(chatRequest); err != nil {
+	turn, err := c.CompleteTurn(ctx, chatRequest)
+	if err != nil {
 		return "", err
+	}
+	if len(turn.Message.ToolCalls) > 0 {
+		return "", nivierrors.Protocol(
+			"provider.complete",
+			"assistant returned tool calls where plain text was expected",
+			nil,
+		)
+	}
+	return turn.Message.Content, nil
+}
+
+func (c *Client) CompleteTurn(ctx context.Context, chatRequest ChatRequest) (AssistantTurn, error) {
+	if err := validateChatRequest(chatRequest); err != nil {
+		return AssistantTurn{}, err
 	}
 
 	chatRequest.Stream = false
 
 	requestBody, err := json.Marshal(chatRequest)
 	if err != nil {
-		return "", nivierrors.Validation("provider.complete", "failed to encode chat request")
+		return AssistantTurn{}, nivierrors.Validation("provider.complete_turn", "failed to encode chat request")
 	}
 
 	requestCtx, cancel := context.WithTimeout(ctx, chatCompletionTimeout)
@@ -66,36 +59,39 @@ func (c *Client) Complete(ctx context.Context, chatRequest ChatRequest) (string,
 		"application/json",
 	)
 	if err != nil {
-		return "", err
+		return AssistantTurn{}, err
 	}
 
 	response, err := c.httpClient.Do(request)
 	if err != nil {
-		return "", classifyTransportError("provider.complete", err)
+		return AssistantTurn{}, classifyTransportError("provider.complete_turn", err)
 	}
 	defer response.Body.Close()
 
-	if err := decodeAPIError(response, "provider.complete", chatRequest.Model); err != nil {
-		return "", err
+	if err := decodeAPIError(response, "provider.complete_turn", chatRequest.Model); err != nil {
+		return AssistantTurn{}, err
 	}
 
 	var payload chatCompletionResponse
 	if err := json.NewDecoder(io.LimitReader(response.Body, 4<<20)).Decode(&payload); err != nil {
-		return "", nivierrors.Protocol(
-			"provider.complete",
+		return AssistantTurn{}, nivierrors.Protocol(
+			"provider.complete_turn",
 			"NVIDIA API returned an unreadable response.",
 			err,
 		)
 	}
 	if len(payload.Choices) == 0 {
-		return "", nivierrors.Protocol(
-			"provider.complete",
+		return AssistantTurn{}, nivierrors.Protocol(
+			"provider.complete_turn",
 			"NVIDIA API response did not include any completion choices.",
 			nil,
 		)
 	}
 
-	return payload.Choices[0].Message.Content, nil
+	return AssistantTurn{
+		Message:      payload.Choices[0].Message,
+		FinishReason: payload.Choices[0].FinishReason,
+	}, nil
 }
 
 func (c *Client) Stream(
@@ -167,11 +163,18 @@ func validateChatRequest(chatRequest ChatRequest) error {
 		}
 
 		switch role {
-		case "system", "user", "assistant":
+		case "system", "user", "assistant", "tool":
 		default:
 			return nivierrors.Validation(
 				"provider.validate_chat_request",
-				"chat message role must be system, user, or assistant",
+				"chat message role must be system, user, assistant, or tool",
+			)
+		}
+
+		if role == "tool" && strings.TrimSpace(message.ToolCallID) == "" {
+			return nivierrors.Validation(
+				"provider.validate_chat_request",
+				"tool messages require tool_call_id",
 			)
 		}
 

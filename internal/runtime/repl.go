@@ -79,7 +79,7 @@ func RunREPL(ctx context.Context, session Session) error {
 			Content: prompt,
 		})
 
-		response, err := runChat(ctx, session, buildMessages(session.Config.SystemPrompt, history))
+		assistant, nextHistory, err := ExecuteAgentTurn(ctx, session, history)
 		if err != nil {
 			history = history[:len(history)-1]
 			if _, writeErr := fmt.Fprintf(session.IO.Err, "error: %v\n", err); writeErr != nil {
@@ -87,11 +87,10 @@ func RunREPL(ctx context.Context, session Session) error {
 			}
 			continue
 		}
-
-		history = append(history, provider.Message{
-			Role:    "assistant",
-			Content: response,
-		})
+		history = nextHistory
+		if _, err := fmt.Fprintln(session.IO.Out, assistant.Content); err != nil {
+			return err
+		}
 	}
 }
 
@@ -210,45 +209,4 @@ func readLine(reader *bufio.Reader) (string, error) {
 	}
 
 	return strings.TrimSpace(line), err
-}
-
-func buildMessages(systemPrompt string, history []provider.Message) []provider.Message {
-	messages := make([]provider.Message, 0, len(history)+1)
-	messages = append(messages, provider.Message{
-		Role:    "system",
-		Content: systemPrompt,
-	})
-	messages = append(messages, history...)
-	return messages
-}
-
-func runChat(ctx context.Context, session Session, messages []provider.Message) (string, error) {
-	request := provider.ChatRequest{
-		Model:     session.Model,
-		Messages:  messages,
-		MaxTokens: session.Config.MaxTokens,
-		Stream:    shouldStream(session.Config, session.IO),
-	}
-
-	if request.Stream {
-		response, err := session.Client.Stream(ctx, request, func(delta string) error {
-			_, writeErr := io.WriteString(session.IO.Out, delta)
-			return writeErr
-		})
-		if err != nil {
-			return "", err
-		}
-
-		if _, err := fmt.Fprintln(session.IO.Out); err != nil {
-			return "", err
-		}
-
-		return response, nil
-	}
-
-	return session.Client.Complete(ctx, request)
-}
-
-func shouldStream(state config.State, streams IO) bool {
-	return state.StreamingEnabled && streams.StdoutTTY
 }
