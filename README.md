@@ -17,15 +17,6 @@ Install the latest release:
 curl -fsSL https://raw.githubusercontent.com/LostWarrior/nivi/main/scripts/install.sh | sh
 ```
 
-The installer downloads the matching release asset for macOS or Linux (`amd64` and `arm64`) and installs `nivi` to `~/.local/bin` by default.
-
-Pin a release or change the install directory:
-
-```bash
-NIVI_VERSION=v0.1.0 sh -c "$(curl -fsSL https://raw.githubusercontent.com/LostWarrior/nivi/main/scripts/install.sh)"
-NIVI_INSTALL_DIR="$HOME/bin" sh -c "$(curl -fsSL https://raw.githubusercontent.com/LostWarrior/nivi/main/scripts/install.sh)"
-```
-
 Then configure and run:
 
 ```bash
@@ -34,11 +25,6 @@ echo 'export NVIDIA_API_KEY="nvapi-your-key-here"' >> ~/.zshrc
 source ~/.zshrc
 nivi
 ```
-
-Alternative:
-
-- Browse release assets manually at [GitHub Releases](https://github.com/LostWarrior/nivi/releases)
-
 ## Usage
 
 - `nivi` starts an interactive chat session
@@ -47,6 +33,7 @@ Alternative:
 - `nivi models` lists models available to the current API key
 - `nivi -m <model-id>` selects a model for the current command
 - `/model` switches models during a chat session
+- `nivi doctor` to check the setup
 - `nivi version` prints the installed version
 
 ## Optional Environment Variables
