@@ -2,13 +2,6 @@
 
 Nivi is a Go-based, terminal-first AI assistant for NVIDIA-hosted models.
 
-V1 is focused on a fast single-binary CLI for:
-
-- interactive chat in the terminal
-- one-shot prompts
-- piping stdin into a prompt
-- listing and switching available models
-
 ## Installation
 
 Install the latest release:
