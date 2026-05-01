@@ -142,6 +142,31 @@ func TestSearchTextFindsMatchesAndRespectsCaseSensitivity(t *testing.T) {
 	}
 }
 
+func TestSearchTextSkipsDotGitDirectory(t *testing.T) {
+	t.Parallel()
+
+	root := t.TempDir()
+	mustMkdirAll(t, filepath.Join(root, ".git"))
+	mustWriteFile(t, filepath.Join(root, ".git", "config"), "token=alpha")
+	mustWriteFile(t, filepath.Join(root, "visible.txt"), "alpha")
+
+	toolset, err := NewToolset(root)
+	if err != nil {
+		t.Fatalf("NewToolset() error = %v", err)
+	}
+
+	output, err := toolset.SearchText("alpha", ".", false)
+	if err != nil {
+		t.Fatalf("SearchText() error = %v", err)
+	}
+	if strings.Contains(output, ".git/config") {
+		t.Fatalf("SearchText() should skip .git, got %q", output)
+	}
+	if !strings.Contains(output, "visible.txt:1:alpha") {
+		t.Fatalf("SearchText() missing non-.git match: %q", output)
+	}
+}
+
 func TestExecuteRoutesTools(t *testing.T) {
 	t.Parallel()
 

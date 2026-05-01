@@ -126,6 +126,9 @@ func (t *Toolset) SearchText(query, inputPath string, caseSensitive bool) (strin
 			return nil
 		}
 		if entry.IsDir() {
+			if entry.Name() == ".git" {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if !entry.Type().IsRegular() {
