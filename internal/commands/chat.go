@@ -2,12 +2,12 @@ package commands
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/LostWarrior/nivi/internal/config"
 	"github.com/LostWarrior/nivi/internal/instructions"
+	"github.com/LostWarrior/nivi/internal/logging"
 	"github.com/LostWarrior/nivi/internal/provider"
 	niviruntime "github.com/LostWarrior/nivi/internal/runtime"
 	"github.com/LostWarrior/nivi/internal/selection"
@@ -69,7 +69,7 @@ func RunChat(ctx context.Context, command ChatCommand) error {
 		if err != nil {
 			return err
 		}
-		if _, err := logger.Assistant(command.Streams.Out, assistant.Content); err != nil {
+		if _, err := logging.WriteAssistant(command.Streams.Out, assistant.Content); err != nil {
 			return err
 		}
 		return nil

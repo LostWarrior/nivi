@@ -10,6 +10,7 @@ import (
 
 	"github.com/LostWarrior/nivi/internal/commands"
 	"github.com/LostWarrior/nivi/internal/config"
+	"github.com/LostWarrior/nivi/internal/logging"
 	"github.com/LostWarrior/nivi/internal/provider"
 	niviruntime "github.com/LostWarrior/nivi/internal/runtime"
 )
@@ -17,10 +18,11 @@ import (
 var version = "dev"
 
 type rootCommand struct {
-	Name    string
-	Prompt  []string
-	Options config.Options
-	JSON    bool
+	Name     string
+	Prompt   []string
+	Options  config.Options
+	JSON     bool
+	Theme    string
 	ShowHelp bool
 }
 
@@ -43,6 +45,10 @@ func Run(args []string, streams niviruntime.IO) int {
 	if command.Name == "version" {
 		_, _ = fmt.Fprintln(streams.Out, version)
 		return 0
+	}
+	if err := logging.SetTheme(command.Theme); err != nil {
+		_, _ = fmt.Fprintln(streams.Err, strings.TrimSpace(err.Error()))
+		return 1
 	}
 
 	state := config.Resolve(command.Options)
@@ -114,10 +120,12 @@ func parseChatCommand(args []string) (rootCommand, error) {
 	flagSet.SetOutput(io.Discard)
 
 	var options config.Options
+	var theme string
 	flagSet.StringVar(&options.Model, "m", "", "model id")
 	flagSet.StringVar(&options.Model, "model", "", "model id")
 	flagSet.StringVar(&options.BaseURL, "base-url", "", "base API URL")
 	flagSet.StringVar(&options.SystemPrompt, "system", "", "system prompt")
+	flagSet.StringVar(&theme, "theme", "", "color theme override (dark|light)")
 	flagSet.IntVar(&options.MaxTokens, "max-tokens", config.DefaultMaxTokens, "max tokens")
 	flagSet.BoolVar(&options.DisableStreaming, "no-stream", false, "disable streaming")
 	if err := flagSet.Parse(args); err != nil {
@@ -128,6 +136,7 @@ func parseChatCommand(args []string) (rootCommand, error) {
 		Name:    "chat",
 		Prompt:  flagSet.Args(),
 		Options: options,
+		Theme:   theme,
 	}, nil
 }
 

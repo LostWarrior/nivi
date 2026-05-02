@@ -19,14 +19,11 @@ source ~/.zshrc
 nivi
 ```
 
+## Colour Support
 
-```md
-## 💡 Colour support
+The terminal UI supports a color theme override:
 
-The terminal UI now honours a colour scheme.  Detects dark / light automatically,
-or use the flag:
-
-```
+```bash
 nivi --theme=dark "hello"
 ```
 

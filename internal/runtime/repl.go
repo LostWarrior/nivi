@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/LostWarrior/nivi/internal/config"
+	"github.com/LostWarrior/nivi/internal/logging"
 	"github.com/LostWarrior/nivi/internal/provider"
 	"github.com/LostWarrior/nivi/internal/selection"
 )
@@ -90,7 +91,7 @@ func RunREPL(ctx context.Context, session Session) error {
 			continue
 		}
 		history = nextHistory
-		if _, err := fmt.Fprintln(session.IO.Out, assistant.Content); err != nil {
+		if _, err := logging.WriteAssistant(session.IO.Out, assistant.Content); err != nil {
 			return err
 		}
 	}
